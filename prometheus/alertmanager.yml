@@ -1,0 +1,30 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "sns-webhook"
+  group_by: ["alertname", "service"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  routes:
+    - match:
+        severity: critical
+      receiver: "sns-webhook"
+      repeat_interval: 1h
+
+receivers:
+  - name: "sns-webhook"
+    webhook_configs:
+      # Point this at a small Lambda/API Gateway endpoint (or the aws-sns-forwarder
+      # sidecar in docker-compose.yml) that republishes to the SNS topic created
+      # by Terraform (see terraform/sns.tf output: sns_topic_arn).
+      - url: "http://sns-forwarder:8080/alert"
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname", "instance"]

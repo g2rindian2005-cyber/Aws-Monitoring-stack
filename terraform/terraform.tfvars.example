@@ -1,0 +1,28 @@
+# Copy this file to terraform.tfvars and fill in your real values.
+# terraform.tfvars is gitignored by default in most setups — never commit real infra IDs/emails if repo is public.
+
+aws_region  = "us-east-1"
+environment = "production"
+alert_email = "you@example.com"
+
+ec2_instance_ids = [
+  "i-0123456789abcdef0",
+  "i-0fedcba9876543210"
+]
+ec2_cpu_threshold = 80
+
+rds_instance_ids = [
+  "my-postgres-db"
+]
+rds_free_storage_threshold_bytes = 2147483648 # 2 GB
+
+alb_arn_suffix    = "app/my-application-lb/50dc6c495c0c9188"
+alb_5xx_threshold = 10
+
+lambda_function_names = [
+  "my-api-handler",
+  "my-image-processor"
+]
+lambda_error_threshold = 5
+
+eks_cluster_name = "my-eks-cluster"

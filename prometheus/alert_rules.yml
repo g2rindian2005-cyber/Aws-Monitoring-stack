@@ -1,0 +1,69 @@
+groups:
+  - name: aws-infra-alerts
+    rules:
+
+      # --- EC2 CPU > 80% (via node-exporter, complements CloudWatch alarm) ---
+      - alert: EC2HighCPU
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: ec2
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU utilization has been above 80% for more than 10 minutes on {{ $labels.instance }}."
+
+      # --- RDS Storage Low (via CloudWatch exporter bridging AWS/RDS FreeStorageSpace) ---
+      - alert: RDSStorageLow
+        expr: aws_rds_free_storage_space_average < 2147483648
+        for: 5m
+        labels:
+          severity: critical
+          service: rds
+        annotations:
+          summary: "RDS free storage is low on {{ $labels.dbinstance_identifier }}"
+          description: "Free storage space has dropped below 2GB on {{ $labels.dbinstance_identifier }}."
+
+      # --- ALB 5xx Errors (via CloudWatch exporter bridging AWS/ApplicationELB) ---
+      - alert: ALB5xxErrors
+        expr: sum(rate(aws_applicationelb_httpcode_target_5_xx_count_sum[5m])) by (load_balancer) > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: alb
+        annotations:
+          summary: "Elevated 5xx errors on ALB {{ $labels.load_balancer }}"
+          description: "The ALB is returning more than 10 5xx errors over the last 5 minutes."
+
+      # --- Instance / Target Down (generic, works for node-exporter targets, pods, etc.) ---
+      - alert: InstanceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: infra
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "Target {{ $labels.instance }} (job {{ $labels.job }}) has been unreachable for more than 2 minutes."
+
+      # --- Lambda Errors (via CloudWatch exporter bridging AWS/Lambda Errors) ---
+      - alert: LambdaErrorsHigh
+        expr: sum(rate(aws_lambda_errors_sum[5m])) by (function_name) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: lambda
+        annotations:
+          summary: "Lambda function {{ $labels.function_name }} is erroring"
+          description: "More than 5 errors in the last 5 minutes for {{ $labels.function_name }}."
+
+      # --- EKS Pod CrashLooping ---
+      - alert: EKSPodCrashLooping
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          service: eks
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+          description: "Container {{ $labels.container }} has restarted more than 3 times in 15 minutes."

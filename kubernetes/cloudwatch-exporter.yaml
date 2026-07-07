@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch-exporter-config
+  namespace: monitoring
+data:
+  config.yml: |
+    region: us-east-1
+    metrics:
+      - aws_namespace: AWS/EC2
+        aws_metric_name: CPUUtilization
+        aws_dimensions: [InstanceId]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/RDS
+        aws_metric_name: FreeStorageSpace
+        aws_dimensions: [DBInstanceIdentifier]
+        aws_statistics: [Average]
+      - aws_namespace: AWS/ApplicationELB
+        aws_metric_name: HTTPCode_Target_5XX_Count
+        aws_dimensions: [LoadBalancer]
+        aws_statistics: [Sum]
+      - aws_namespace: AWS/Lambda
+        aws_metric_name: Errors
+        aws_dimensions: [FunctionName]
+        aws_statistics: [Sum]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudwatch-exporter
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudwatch-exporter
+  template:
+    metadata:
+      labels:
+        app: cloudwatch-exporter
+    spec:
+      # Requires IRSA (IAM Roles for Service Accounts) bound to a role with
+      # cloudwatch:GetMetricData / cloudwatch:ListMetrics permissions.
+      serviceAccountName: cloudwatch-exporter-sa
+      containers:
+        - name: cloudwatch-exporter
+          image: prom/cloudwatch-exporter:cloudwatch_exporter-0.15.5
+          args: ["9106", "/config/config.yml"]
+          ports:
+            - containerPort: 9106
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: cloudwatch-exporter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudwatch-exporter
+  namespace: monitoring
+spec:
+  selector:
+    app: cloudwatch-exporter
+  ports:
+    - port: 9106
+      targetPort: 9106
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudwatch-exporter-sa
+  namespace: monitoring
+  annotations:
+    # Replace with your actual IRSA role ARN
+    eks.amazonaws.com/role-arn: "arn:aws:iam::<ACCOUNT_ID>:role/cloudwatch-exporter-role"

@@ -1,0 +1,64 @@
+# Values file for the community "kube-prometheus-stack" Helm chart.
+# Install with:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm install kube-prom-stack prometheus-community/kube-prometheus-stack \
+#     -n monitoring -f kubernetes/prometheus-values.yaml
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    additionalScrapeConfigs:
+      - job_name: "cloudwatch-exporter"
+        static_configs:
+          - targets: ["cloudwatch-exporter.monitoring.svc:9106"]
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "sns-webhook"
+      group_by: ["alertname", "service"]
+      group_wait: 30s
+      repeat_interval: 3h
+    receivers:
+      - name: "sns-webhook"
+        webhook_configs:
+          - url: "http://sns-forwarder.monitoring.svc:8080/alert"
+            send_resolved: true
+
+grafana:
+  adminPassword: "changeme123!"   # override via --set or a Kubernetes Secret in production
+  persistence:
+    enabled: true
+    size: 5Gi
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "aws-infra"
+          orgId: 1
+          folder: "AWS Infrastructure"
+          type: file
+          options:
+            path: /var/lib/grafana/dashboards/aws-infra
+  dashboardsConfigMaps:
+    aws-infra: "grafana-aws-dashboard"
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
