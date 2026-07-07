@@ -202,7 +202,9 @@ If you'd rather skip this, that's fine — CloudWatch Alarms already send to SNS
 | `AccessDenied` from cloudwatch-exporter | IAM role missing permissions | Attach the policy in `terraform/iam-cloudwatch-readonly-policy.json` |
 | Terraform `for_each` errors on empty list | `ec2_instance_ids` etc. left as `[]` | Fill in real resource IDs in `terraform.tfvars` |
 | ALB panel empty | Wrong `alb_arn_suffix` format | Must be `app/<name>/<id>`, not the full ARN |
-| Docker Compose port already in use | Another service on 3000/9090 | Change the left-hand port mapping in `docker-compose.yml`, e.g. `3001:3000` |
+| Docker Compose port already in use | Another service on 3000/9090 | Change the left-hand port mapping in `docker-compose.yml`, e.g. `3001:3000` |  
+
+
 
 ---
 
@@ -212,3 +214,23 @@ If you'd rather skip this, that's fine — CloudWatch Alarms already send to SNS
 - Restrict Grafana/Prometheus access with a security group, VPN, or put them behind an authenticating reverse proxy — don't expose ports 3000/9090 to `0.0.0.0/0`.
 - Use an IAM role (instance profile or IRSA), never long-lived access keys, for the CloudWatch exporter.
 - Consider AWS Managed Grafana / Amazon Managed Prometheus if you'd rather not operate this stack yourself.
+
+-      ########################## project explaination ###############################################################################
+-
+-
+-         "I worked on an AWS Infrastructure Monitoring project where the goal was to monitor the health and performance of AWS resources and Linux servers in real time.
+
+The monitoring stack was containerized using Docker Compose and deployed on an Amazon EC2 instance. I used Prometheus as the monitoring system, Grafana for visualization, Alertmanager for notifications, Node Exporter to collect Linux server metrics, and CloudWatch Exporter to collect AWS CloudWatch metrics."  
+
+
+
+
+  ################################################# explain you role ################################################
+
+  Explain your role
+
+Answer:
+
+"My responsibility was to deploy and configure the complete monitoring stack.
+
+I created the infrastructure using Terraform, deployed the monitoring tools using Docker Compose, configured Prometheus to scrape metrics from Node Exporter and CloudWatch Exporter, connected Prometheus to Grafana for visualization, and configured Alertmanager to send email notifications through Amazon SNS whenever predefined thresholds were crossed."
