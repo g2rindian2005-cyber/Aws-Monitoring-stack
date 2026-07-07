@@ -3,7 +3,7 @@
 
 aws_region  = "us-east-1"
 environment = "production"
-alert_email = "you@example.com"
+alert_email = "gokul9356782322@gmail.com"
 
 ec2_instance_ids = [
   "i-0123456789abcdef0",
