@@ -6,7 +6,7 @@ environment = "production"
 alert_email = "gokul9356782322@gmail.com"
 
 ec2_instance_ids = [
-  "i-0123456789abcdef0",
+  "i-06067086cf86c58e6",
   "i-0fedcba9876543210"
 ]
 ec2_cpu_threshold = 80
